@@ -1,6 +1,7 @@
 ﻿import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL || '/api';
+// Fallback automatico para a API do Render do projeto
+const baseURL = import.meta.env.VITE_API_URL || 'https://conecta-candidato-api-qvrx.onrender.com/api';
 
 const api = axios.create({ baseURL });
 
