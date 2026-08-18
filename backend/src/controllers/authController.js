@@ -12,9 +12,10 @@ const whatsappService = require('../services/whatsappService');
 const logger = require('../utils/logger');
 
 function signToken(user, profileId) {
+  const secret = process.env.JWT_SECRET || 'conecta-candidato-secret-key-df-2026';
   return jwt.sign(
     { id: user.id, role: user.role, profileId },
-    process.env.JWT_SECRET,
+    secret,
     { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
   );
 }
