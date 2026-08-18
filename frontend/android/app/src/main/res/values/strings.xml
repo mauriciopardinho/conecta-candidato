@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Conecta Candidato</string>
+    <string name="title_activity_main">Conecta Candidato</string>
+    <string name="package_name">br.df.conectacandidato</string>
+    <string name="custom_url_scheme">br.df.conectacandidato</string>
+</resources>
