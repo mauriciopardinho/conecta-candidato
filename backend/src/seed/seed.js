@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const {
   sequelize,
   User,
@@ -16,7 +16,6 @@ const {
 const { hashPassword } = require('../utils/crypto');
 const logger = require('../utils/logger');
 
-// Regiões Administrativas (RAs) reais do Distrito Federal (Brasília - DF)
 const DF_REGIONS = [
   { name: 'Ceilândia (RA IX)', latitude: -15.8209, longitude: -48.1078, monthly_goal: 600 },
   { name: 'Samambaia (RA XII)', latitude: -15.8756, longitude: -48.0856, monthly_goal: 500 },
@@ -34,7 +33,6 @@ const DF_REGIONS = [
 ];
 
 const PROPOSAL_CATEGORIES = ['Saúde', 'Educação', 'Infraestrutura', 'Segurança', 'Emprego', 'Mobilidade Urbana (DF)'];
-
 const FICTIONAL_FIRST_NAMES = ['Ana', 'Bruno', 'Carla', 'Diego', 'Elisa', 'Fábio', 'Gabriela', 'Hugo', 'Ivana', 'João', 'Lucas', 'Mariana', 'Pedro', 'Renata'];
 const FICTIONAL_LAST_NAMES = ['Silva', 'Souza', 'Oliveira', 'Pereira', 'Costa', 'Rodrigues', 'Almeida', 'Nascimento', 'Ferreira', 'Santos'];
 
@@ -53,11 +51,10 @@ function dateNDaysAgo(n) {
   return d.toISOString();
 }
 
-async function seed() {
+async function runSeed() {
   await sequelize.sync({ force: true });
   logger.info('Banco recriado. Iniciando seed de dados do Distrito Federal (Brasília)...');
 
-  // --- Regiões do DF ---
   const regions = await Region.bulkCreate(
     DF_REGIONS.map((r) => ({
       name: r.name,
@@ -70,7 +67,6 @@ async function seed() {
     { returning: true }
   );
 
-  // --- Administrador da Campanha ---
   const adminPasswordHash = await hashPassword('Admin@123');
   const adminUser = await User.create({
     role: 'admin',
@@ -83,7 +79,6 @@ async function seed() {
   });
   logger.info(`Admin fictício da Campanha DF criado — usuário: admin / senha: Admin@123`);
 
-  // --- Cabos Eleitorais por Região Administrativa (13 cabos) ---
   const agents = [];
   const caboPasswordHash = await hashPassword('Cabo@123');
   for (let i = 0; i < regions.length; i++) {
@@ -104,9 +99,7 @@ async function seed() {
     });
     agents.push(agent);
   }
-  logger.info('Cabos eleitorais criados para as RAs do DF (usuário: cabo1..cabo13 / senha: Cabo@123)');
 
-  // --- Propostas da Campanha DF ---
   const proposals = [];
   const sampleProposals = [
     { title: 'Ampliação do VLP eBRT até Samambaia e Ceilândia', category: 'Mobilidade Urbana (DF)', desc: 'Construção e ampliação de corredores exclusivos de transporte público interconectando Ceilândia, Taguatinga e Samambaia.' },
@@ -131,7 +124,6 @@ async function seed() {
     proposals.push(proposal);
   }
 
-  // --- Eleitores cadastrados (150) ---
   const voters = [];
   const eleitorPasswordHash = await hashPassword('Eleitor@123');
   for (let i = 1; i <= 120; i++) {
@@ -158,7 +150,6 @@ async function seed() {
     voters.push(voter);
   }
 
-  // --- 100 Registros de campo feitos pelos Cabos nas RAs ---
   for (let i = 1; i <= 100; i++) {
     const agent = randomFrom(agents);
     const region = regions.find((r) => r.id === agent.region_id) || randomFrom(regions);
@@ -182,7 +173,6 @@ async function seed() {
     });
   }
 
-  // --- Produção Histórica de 90 dias nas RAs do DF ---
   for (const agent of agents) {
     for (let d = 89; d >= 0; d--) {
       const base = 2 + Math.random() * 5;
@@ -198,7 +188,6 @@ async function seed() {
     }
   }
 
-  // --- Sugestões e Solicitações de Eleitores nas RAs ---
   const requestSubjects = [
     'Manutenção de iluminação pública na quadra principal',
     'Solicitação de reforma da praça comunitária e parquinho',
@@ -219,7 +208,6 @@ async function seed() {
     });
   }
 
-  // --- LOGS DE AUDITORIA REALISTAS (LGPD & Transparência) ---
   const auditLogsSample = [
     { action: 'ACEITE_TERMOS_LGPD', entity: 'ConsentRecord', actor_role: 'voter', ip_address: '177.135.22.10', metadata: JSON.stringify({ detalhe: 'Consentimento de tratamento de dados LGPD aceito pelo eleitor' }) },
     { action: 'CADASTRAR_ELEITOR_CAMPO', entity: 'Registration', actor_role: 'field_agent', ip_address: '177.182.45.89', metadata: JSON.stringify({ regiao: 'Ceilândia (RA IX)', origem: 'Abordagem Presencial' }) },
@@ -247,10 +235,13 @@ async function seed() {
   }
 
   logger.info('✅ Seed concluído com sucesso! Banco populado com RAs do Distrito Federal e Logs de Auditoria.');
-  process.exit(0);
 }
 
-seed().catch((err) => {
-  logger.error('Erro ao rodar o seed:', err);
-  process.exit(1);
-});
+if (require.main === module) {
+  runSeed().then(() => process.exit(0)).catch((err) => {
+    logger.error('Erro ao rodar o seed:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = runSeed;
