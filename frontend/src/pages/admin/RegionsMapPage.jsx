@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import api from '../../services/api';
 import 'leaflet/dist/leaflet.css';
@@ -24,9 +24,9 @@ export default function RegionsMapPage() {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
-        <div className="cc-card" style={{ padding: 0, overflow: 'hidden', height: 500, borderRadius: 16 }}>
-          <MapContainer center={center} zoom={11} style={{ height: '100%', width: '100%' }}>
+      <div className="cc-map-grid">
+        <div className="cc-card" style={{ padding: 0, overflow: 'hidden', minHeight: 400, height: 480, borderRadius: 16, width: '100%' }}>
+          <MapContainer center={center} zoom={11} style={{ height: '100%', width: '100%', minHeight: 400 }}>
             <TileLayer
               attribution='&copy; OpenStreetMap contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -41,7 +41,7 @@ export default function RegionsMapPage() {
               >
                 <Popup>
                   <strong>{r.name}</strong><br />
-                  📍 {r.registrationsCount} apoiadores cadastrados
+                  👥 {r.registrationsCount} apoiadores cadastrados
                 </Popup>
               </CircleMarker>
             ))}
@@ -81,7 +81,7 @@ export default function RegionsMapPage() {
             </>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 10px', color: 'var(--cc-text-muted)' }}>
-              <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 8 }}>🗺️</span>
+              <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 8 }}>📍</span>
               <p style={{ margin: 0, fontSize: '0.9rem' }}>
                 Clique no marcador de uma Região Administrativa no mapa para ver o panorama detalhado de campo.
               </p>

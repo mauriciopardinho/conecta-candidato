@@ -210,3 +210,8 @@ button {
   .cc-mobile-subnav { display: flex; }
   .cc-admin-layout { margin-left: 0; padding: 16px; }
 }
+
+
+/* Responsividade do Mapa no Celular */
+.cc-map-grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+@media (max-width: 900px) { .cc-map-grid { grid-template-columns: 1fr !important; } }

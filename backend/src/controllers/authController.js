@@ -141,52 +141,67 @@ async function verifyWhatsapp(req, res) {
 
 /** Login unificado — funciona para voter, field_agent e admin */
 async function login(req, res) {
-  const { identifier, password } = req.body; // identifier = telefone (eleitor) ou usuário (cabo/admin)
+  try {
+    const { identifier, password } = req.body; // identifier = telefone (eleitor) ou usuário (cabo/admin)
 
-  const user = await User.findOne({
-    where: { [Op.or]: [{ phone: identifier }, { username: identifier }, { email: identifier }] },
-  });
-
-  if (!user) {
-    return res.status(401).json({ error: 'Credenciais inválidas.' });
-  }
-
-  if (user.role === 'voter' && user.status !== 'active') {
-    return res.status(403).json({ error: 'Conta ainda não confirmada. Verifique o código enviado por WhatsApp.' });
-  }
-  if (user.role === 'field_agent') {
-    const agent = await FieldAgent.findOne({ where: { user_id: user.id } });
-    if (agent && !agent.is_active) {
-      return res.status(403).json({ error: 'Seu acesso está inativo. Fale com o administrador.' });
+    if (!identifier || !password) {
+      return res.status(400).json({ error: 'Informe o usuário/telefone e a senha.' });
     }
+
+    const cleanIdentifier = String(identifier).trim();
+
+    const user = await User.findOne({
+      where: { [Op.or]: [{ phone: cleanIdentifier }, { username: cleanIdentifier }, { email: cleanIdentifier }] },
+    });
+
+    if (!user) {
+      logger.warn(`Tentativa de login falhou: usuário/identificador não encontrado (${cleanIdentifier})`);
+      return res.status(401).json({ error: 'Credenciais inválidas.' });
+    }
+
+    if (user.role === 'voter' && user.status !== 'active') {
+      return res.status(403).json({ error: 'Conta ainda não confirmada. Verifique o código enviado por WhatsApp.' });
+    }
+    if (user.role === 'field_agent') {
+      const agent = await FieldAgent.findOne({ where: { user_id: user.id } });
+      if (agent && !agent.is_active) {
+        return res.status(403).json({ error: 'Seu acesso está inativo. Fale com o administrador.' });
+      }
+    }
+    if (user.status === 'blocked') {
+      return res.status(403).json({ error: 'Conta bloqueada.' });
+    }
+
+    const valid = await comparePassword(password, user.password_hash);
+    if (!valid) {
+      logger.warn(`Tentativa de login falhou: senha incorreta para o usuário ${user.username || user.phone}`);
+      return res.status(401).json({ error: 'Credenciais inválidas.' });
+    }
+
+    let profileId = null;
+    if (user.role === 'voter') {
+      const voter = await Voter.findOne({ where: { user_id: user.id } });
+      profileId = voter?.id;
+    } else if (user.role === 'field_agent') {
+      const agent = await FieldAgent.findOne({ where: { user_id: user.id } });
+      profileId = agent?.id;
+    }
+
+    user.last_login_at = new Date();
+    await user.save();
+
+    const token = signToken(user, profileId);
+
+    logger.info(`Login efetuado com sucesso: ${user.username || user.phone} (role: ${user.role})`);
+
+    return res.json({
+      token,
+      user: { id: user.id, username: user.username, role: user.role, status: user.status, profileId },
+    });
+  } catch (err) {
+    logger.error(`Erro crítico durante autenticação de login: ${err.message}`, { stack: err.stack });
+    return res.status(500).json({ error: 'Erro interno ao realizar login. Tente novamente em instantes.' });
   }
-  if (user.status === 'blocked') {
-    return res.status(403).json({ error: 'Conta bloqueada.' });
-  }
-
-  const valid = await comparePassword(password, user.password_hash);
-  if (!valid) {
-    return res.status(401).json({ error: 'Credenciais inválidas.' });
-  }
-
-  let profileId = null;
-  if (user.role === 'voter') {
-    const voter = await Voter.findOne({ where: { user_id: user.id } });
-    profileId = voter?.id;
-  } else if (user.role === 'field_agent') {
-    const agent = await FieldAgent.findOne({ where: { user_id: user.id } });
-    profileId = agent?.id;
-  }
-
-  user.last_login_at = new Date();
-  await user.save();
-
-  const token = signToken(user, profileId);
-
-  return res.json({
-    token,
-    user: { id: user.id, role: user.role, status: user.status, profileId },
-  });
 }
 
 /** Solicita recuperação de senha (envia código por WhatsApp) */
