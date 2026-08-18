@@ -1,12 +1,18 @@
-import React, { createContext, useContext, useState } from 'react';
+﻿import React, { createContext, useContext, useState } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem('cc_user');
-    return raw ? JSON.parse(raw) : null;
+    try {
+      const raw = localStorage.getItem('cc_user');
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      localStorage.removeItem('cc_user');
+      localStorage.removeItem('cc_token');
+      return null;
+    }
   });
 
   async function login(identifier, password) {
