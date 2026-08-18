@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 
 // Fallback automatico para a API do Render do projeto
 const baseURL = import.meta.env.VITE_API_URL || 'https://conecta-candidato-api-qvrx.onrender.com/api';
@@ -17,7 +17,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.removeItem('cc_token');
       localStorage.removeItem('cc_user');
-      if (window.location.pathname !== '/login') window.location.href = '/login';
+      if (!window.location.hash.includes('/login')) window.location.hash = '#/login';
     }
     return Promise.reject(err);
   }

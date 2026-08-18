@@ -29,7 +29,7 @@ export default function RegisterPage() {
         localStorage.setItem('cc_user', JSON.stringify(data.user));
         setSuccess('Cadastro realizado com sucesso! Entrando no aplicativo...');
         setTimeout(() => {
-          window.location.href = '/app';
+          window.location.hash = '#/app';
         }, 1000);
       } else {
         navigate('/login', { state: { registered: true } });
