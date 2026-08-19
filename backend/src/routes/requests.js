@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 
 const requestController = require('../controllers/requestController');
@@ -11,8 +11,12 @@ const { registerAudit } = require('../middleware/auditLog');
 router.post('/', authenticate, authorize('voter'), validate(requestSchema), requestController.create);
 router.get('/my-requests', authenticate, authorize('voter'), requestController.myList);
 
-// Administração — dados pessoais do solicitante não expostos publicamente
+// Atendimento por Lideranças de Campo
+router.get('/agent', authenticate, authorize('field_agent'), requestController.agentList);
+router.patch('/agent/:id', authenticate, authorize('field_agent'), registerAudit('UPDATE_REQUEST_AGENT', 'RequestModel'), requestController.updateStatus);
+
+// Administração Geral
 router.get('/admin', authenticate, authorize('admin'), requestController.adminList);
-router.patch('/admin/:id', authenticate, authorize('admin'), registerAudit('UPDATE_REQUEST', 'RequestModel'), requestController.updateStatus);
+router.patch('/admin/:id', authenticate, authorize('admin'), registerAudit('UPDATE_REQUEST_ADMIN', 'RequestModel'), requestController.updateStatus);
 
 module.exports = router;

@@ -5,21 +5,53 @@ import { useAuth } from '../../services/AuthContext';
 export default function AdminLayout() {
   const { logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [demoBanner, setDemoBanner] = useState(true);
 
   const menuItems = [
-    { to: '/admin', label: 'Dashboard', icon: '📊', end: true },
-    { to: '/admin/producao', label: 'Produção por Cabo', icon: '📈' },
-    { to: '/admin/regioes', label: 'Mapa de Regiões (DF)', icon: '🗺️' },
-    { to: '/admin/cabos', label: 'Cabos Eleitorais', icon: '👥' },
+    { to: '/admin', label: 'Centro de Comando', icon: '📊', end: true },
+    { to: '/admin/producao', label: 'Produção de Campo', icon: '📈' },
+    { to: '/admin/regioes', label: 'Mapa das RAs (DF)', icon: '🗺️' },
+    { to: '/admin/cabos', label: 'Lideranças & Cabos', icon: '📱' },
     { to: '/admin/sugestoes', label: 'Sugestões', icon: '💡' },
-    { to: '/admin/solicitacoes', label: 'Solicitações', icon: '📝' },
-    { to: '/admin/ml', label: 'Machine Learning', icon: '🧠' },
-    { to: '/admin/auditoria', label: 'Logs de Auditoria', icon: '📜' },
+    { to: '/admin/solicitacoes', label: 'Demandas Comunitárias', icon: '🛠️' },
+    { to: '/admin/ml', label: 'Inteligência Operacional', icon: '🧠' },
+    { to: '/admin/auditoria', label: 'Auditoria LGPD', icon: '📜' },
+    { to: '/admin/onboarding', label: 'Configurar Campanha', icon: '⚙️' },
+    { to: '/pricing', label: 'Planos SaaS', icon: '💎' },
   ];
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cc-bg)' }}>
-      {/* HEADER MOBILE (Visível apenas em telas pequenas) */}
+      
+      {/* BANNER MODO DEMONSTRAÇÃO COMERCIAL */}
+      {demoBanner && (
+        <div style={{
+          background: 'linear-gradient(90deg, #0d9488 0%, #2563eb 100%)',
+          color: '#ffffff',
+          padding: '8px 16px',
+          fontSize: '0.82rem',
+          fontWeight: 600,
+          display: 'flex',
+          justify: 'space-between',
+          alignItems: 'center',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10001,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>✨ <strong>Modo Demonstração Comercial SaaS:</strong> Dados simulados baseados nas Regiões Administrativas do DF.</span>
+          </div>
+          <button
+            onClick={() => setDemoBanner(false)}
+            style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '1.1rem', padding: '0 4px' }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* HEADER MOBILE */}
       <header className="cc-mobile-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
@@ -39,7 +71,7 @@ export default function AdminLayout() {
             {mobileMenuOpen ? '✕' : '☰'}
           </button>
           <span style={{ fontFamily: 'var(--cc-font-display)', fontWeight: 700, fontSize: '1.05rem', color: '#ffffff' }}>
-            Conecta Candidato (DF)
+            Conecta Candidato DF
           </span>
         </div>
 
@@ -59,7 +91,7 @@ export default function AdminLayout() {
         </button>
       </header>
 
-      {/* BARRA DE ROLAGEM HORIZONTAL RÁPIDA NO MOBILE */}
+      {/* BARRA DE ROLAGEM HORIZONTAL NO MOBILE */}
       <div className="cc-mobile-subnav">
         {menuItems.map((item) => (
           <NavLink
@@ -77,13 +109,11 @@ export default function AdminLayout() {
       {/* DRAWER SLIDE-OVER MOBILE */}
       {mobileMenuOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex' }}>
-          {/* Overlay escuro */}
           <div
             onClick={() => setMobileMenuOpen(false)}
             style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(3px)' }}
           />
 
-          {/* Menu Drawer */}
           <div style={{
             position: 'relative',
             width: '280px',
@@ -102,9 +132,9 @@ export default function AdminLayout() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 12 }}>
               <div>
                 <div style={{ fontFamily: 'var(--cc-font-display)', fontWeight: 700, fontSize: '1.1rem', color: '#fff' }}>
-                  Conecta DF
+                  Conecta Candidato DF
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Painel Administrativo</div>
+                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Centro de Comando</div>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
@@ -162,7 +192,7 @@ export default function AdminLayout() {
         </div>
       )}
 
-      {/* SIDEBAR DESKTOP (Fixa à esquerda) */}
+      {/* SIDEBAR DESKTOP */}
       <aside className="cc-sidebar">
         <div style={{ fontFamily: 'var(--cc-font-display)', fontSize: '1.1rem', marginBottom: 24, color: '#fff', fontWeight: 700 }}>
           Conecta Candidato DF

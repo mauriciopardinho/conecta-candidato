@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
-const { User, Voter, FieldAgent, WhatsappVerification, ConsentRecord } = require('../models');
+const { User, Voter, FieldAgent, WhatsappVerification, ConsentRecord, RequestModel, Suggestion, AuditLog } = require('../models');
 const {
   hashPassword,
   comparePassword,
@@ -254,18 +254,99 @@ async function resetPassword(req, res) {
 
 /** Alteração de senha estando autenticado */
 async function changePassword(req, res) {
-  const { currentPassword, newPassword } = req.body;
-  const user = await User.findByPk(req.user.id);
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findByPk(req.user.id);
 
-  const valid = await comparePassword(currentPassword, user.password_hash);
-  if (!valid) {
-    return res.status(401).json({ error: 'Senha atual incorreta.' });
+    const valid = await comparePassword(currentPassword, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Senha atual incorreta.' });
+    }
+
+    user.password_hash = await hashPassword(newPassword);
+    await user.save();
+
+    return res.json({ message: 'Senha alterada com sucesso.' });
+  } catch (err) {
+    logger.error(`Erro ao alterar senha: ${err.message}`);
+    return res.status(500).json({ error: 'Erro ao alterar senha.' });
   }
+}
 
-  user.password_hash = await hashPassword(newPassword);
-  await user.save();
+/** Exportação de dados do titular (LGPD Art. 18 - Portabilidade) */
+async function exportVoterData(req, res) {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: { exclude: ['password_hash'] },
+    });
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
 
-  return res.json({ message: 'Senha alterada com sucesso.' });
+    const voter = await Voter.findOne({ where: { user_id: user.id } });
+    const consents = voter
+      ? await ConsentRecord.findAll({ where: { subject_type: 'voter', subject_id: voter.id } })
+      : [];
+    const requests = voter
+      ? await RequestModel.findAll({ where: { voter_id: voter.id } })
+      : [];
+    const suggestions = voter
+      ? await Suggestion.findAll({ where: { voter_id: voter.id } })
+      : [];
+
+    return res.json({
+      export_date: new Date().toISOString(),
+      lgpd_compliance: 'LGPD Art. 18 - Direito de Acesso e Portabilidade',
+      user: {
+        id: user.id,
+        phone: user.phone,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        status: user.status,
+        created_at: user.created_at,
+      },
+      profile: voter,
+      consents,
+      requests,
+      suggestions,
+    });
+  } catch (err) {
+    logger.error(`Erro ao exportar dados LGPD: ${err.message}`);
+    return res.status(500).json({ error: 'Erro ao gerar exportação de dados.' });
+  }
+}
+
+/** Exclusão/Anonimização da conta do eleitor (LGPD Art. 18 - Eliminação) */
+async function deleteVoterAccount(req, res) {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+
+    const voter = await Voter.findOne({ where: { user_id: user.id } });
+
+    user.phone = `+55 (00) 00000-0000_ANON_${user.id.slice(0, 6)}`;
+    user.email = `anon_${user.id.slice(0, 6)}@lgpd.local`;
+    user.username = null;
+    user.status = 'blocked';
+    await user.save();
+
+    if (voter) {
+      voter.full_name = 'Titular Anonimizado (LGPD)';
+      await voter.save();
+    }
+
+    await AuditLog.create({
+      actor_role: user.role,
+      action: 'EXCLUSAO_ANONIMIZACAO_CONTA',
+      entity: 'User',
+      ip_address: req.ip || '127.0.0.1',
+      metadata: JSON.stringify({ userId: user.id, motivo: 'Solicitação de eliminação de dados LGPD pelo titular' }),
+    });
+
+    return res.json({ message: 'Sua conta e seus dados pessoais foram anonimizados com sucesso conforme a LGPD.' });
+  } catch (err) {
+    logger.error(`Erro ao anonimizar conta LGPD: ${err.message}`);
+    return res.status(500).json({ error: 'Erro ao processar exclusão de conta.' });
+  }
 }
 
 module.exports = {
@@ -275,4 +356,6 @@ module.exports = {
   forgotPassword,
   resetPassword,
   changePassword,
+  exportVoterData,
+  deleteVoterAccount,
 };

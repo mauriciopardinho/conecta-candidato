@@ -13,8 +13,8 @@ export default function VoterLayout() {
         position: 'sticky', top: 0, zIndex: 100
       }}>
         <div>
-          <strong style={{ fontFamily: 'var(--cc-font-display)', fontSize: '1.1rem', color: '#fff' }}>Conecta Candidato</strong>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Área do Eleitor (DF)</div>
+          <strong style={{ fontFamily: 'var(--cc-font-display)', fontSize: '1.1rem', color: '#fff' }}>Conecta Candidato DF</strong>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Portal do Eleitor</div>
         </div>
         <button onClick={logout} className="cc-btn" style={{ background: 'rgba(255,255,255,0.1)', color: '#dfe9f2', fontSize: '0.82rem', padding: '6px 14px' }}>
           Sair
@@ -31,7 +31,7 @@ export default function VoterLayout() {
           <span>Início</span>
         </NavLink>
         <NavLink to="/app/propostas" className={({ isActive }) => (isActive ? 'active' : '')}>
-          <span>📋</span>
+          <span>📑</span>
           <span>Propostas</span>
         </NavLink>
         <NavLink to="/app/sugestoes" className={({ isActive }) => (isActive ? 'active' : '')}>
@@ -39,8 +39,12 @@ export default function VoterLayout() {
           <span>Sugestões</span>
         </NavLink>
         <NavLink to="/app/solicitacoes" className={({ isActive }) => (isActive ? 'active' : '')}>
-          <span>📝</span>
-          <span>Solicitações</span>
+          <span>🛠️</span>
+          <span>Demandas</span>
+        </NavLink>
+        <NavLink to="/app/privacidade" className={({ isActive }) => (isActive ? 'active' : '')}>
+          <span>🛡️</span>
+          <span>Privacidade</span>
         </NavLink>
       </nav>
     </div>

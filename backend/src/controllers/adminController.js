@@ -50,6 +50,14 @@ async function dashboardSummary(req, res) {
     RequestModel.count({ where: { status: 'concluida' } }),
   ]);
 
+  const recentActivities = await AuditLog.findAll({
+    limit: 8,
+    order: [['created_at', 'DESC']],
+  });
+
+  const totalRequests = openRequests + completedRequests;
+  const resolutionRate = totalRequests > 0 ? Math.round((completedRequests / totalRequests) * 100) : 0;
+
   return res.json({
     totalRegistrations,
     todayRegistrations,
@@ -59,6 +67,9 @@ async function dashboardSummary(req, res) {
     regionsCount,
     openRequests,
     completedRequests,
+    totalRequests,
+    resolutionRate,
+    recentActivities,
   });
 }
 

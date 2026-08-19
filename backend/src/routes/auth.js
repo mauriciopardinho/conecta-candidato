@@ -20,5 +20,7 @@ router.post('/login', authLimiter, validate(loginSchema), authController.login);
 router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), authController.forgotPassword);
 router.post('/reset-password', authLimiter, validate(resetPasswordSchema), authController.resetPassword);
 router.post('/change-password', authenticate, validate(changePasswordSchema), authController.changePassword);
+router.get('/voter/me/export', authenticate, authController.exportVoterData);
+router.delete('/voter/me', authenticate, authController.deleteVoterAccount);
 
 module.exports = router;
