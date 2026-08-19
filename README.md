@@ -1,168 +1,64 @@
-# Conecta Candidato
+# 🚀 Conecta Candidato DF — Centro de Comando Digital da Campanha (SaaS)
 
-Plataforma digital de gestão e relacionamento para campanha eleitoral, com três
-perfis independentes: **Admin/Candidato**, **Cabo Eleitoral** e **Eleitor**.
+Plataforma digital de gestão eleitoral territorial, inteligência de campo e relacionamento comunitário para o Distrito Federal, estruturada em **3 perfis independentes**: **Admin/Candidato**, **Cabo Eleitoral (Minha Operação)** e **Eleitor**.
 
-> ⚠️ Este é um projeto de demonstração/desenvolvimento. Os dados gerados pelo
-> seed (`npm run seed`) são **100% fictícios**. Antes de qualquer uso real em
-> campanha, revise a seção de Segurança e LGPD abaixo e ajuste `.env`,
-> segredos JWT e a integração real com WhatsApp.
+---
 
-## Stack
+## 📌 Guia Completo de Demonstração & Apresentação
 
-- **Backend:** Node.js + Express + Sequelize (SQLite em dev, Postgres-ready em produção)
-- **Frontend:** React + Vite + React Router + Recharts + Leaflet
-- **Autenticação:** JWT + bcrypt
-- **Mobile:** o mesmo frontend React é empacotável em APK via Capacitor (ver seção abaixo)
+Este repositório contém a versão final e auditada do **Conecta Candidato DF**. Para enviar esta documentação e o código fonte completo para análise no ChatGPT ou apresentação a clientes/candidatos, consulte o resumo estruturado abaixo.
 
-Veja `docs/ARCHITECTURE.md` para o detalhamento completo da arquitetura,
-modelo de dados e decisões de design.
+---
 
-## Estrutura
+## 🏛️ Perfis de Acesso & Matriz de Credenciais
 
-```
-conecta-candidato/
-├── backend/     # API REST (Node/Express/Sequelize)
-├── frontend/    # SPA React (eleitor, cabo, admin)
-└── docs/        # Arquitetura e instalação
-```
+| Perfil | Usuário / Identificador | Senha | RA de Atuação | Descrição da Interface |
+| :--- | :--- | :--- | :--- | :--- |
+| **Admin da Campanha** | `admin` | `Admin@123` | Distrito Federal (Todas as 13 RAs) | **Centro de Comando Digital:** Indicadores em tempo real, Mapa Leaflet das RAs, resolutividade, log de auditoria e IA preditiva. |
+| **Cabo Eleitoral 1** | `cabo1` | `Cabo@123` | Ceilândia (RA IX) | **App "MINHA OPERAÇÃO":** Interface mobile com abas de cadastro rápido, demandas da região e gráficos de meta pessoal. |
+| **Cabos Eleitorais 2..13** | `cabo2` .. `cabo13` | `Cabo@123` | Samambaia, Taguatinga, Plano Piloto... | **Atuação Regional:** Cada cabo gerencia os contatos e solicitações comunitárias exclusivamente da sua RA atribuída. |
+| **Eleitor Cadastrado** | `+5561998342745` | `Eleitor@123` | Ceilândia | **Portal do Eleitor:** Propostas da campanha, envio de sugestões, abertura de demandas comunitárias e Central de Privacidade LGPD. |
 
-## Como rodar localmente
+---
 
-### 1. Backend
+## 🛠️ Stack Tecnológico
 
+- **Backend:** Node.js (v18+) + Express + Sequelize ORM (SQLite em desenvolvimento, Postgres-ready para produção)
+- **Frontend:** React 18 + Vite + React Router (HashRouter SPA) + Recharts + Leaflet Maps
+- **Autenticação & Segurança:** JWT (`jsonwebtoken`) + Criptografia `bcrypt` + Middleware RBAC por perfil
+- **Privacidade & Compliance:** Módulo LGPD Art. 18 com exportação de dados em JSON (`GET /voter/me/export`) e eliminação/anonimização auditável (`DELETE /voter/me`)
+
+---
+
+## ⚙️ Como Executar Localmente
+
+### 1. Iniciar o Backend API
 ```bash
 cd backend
-cp .env.example .env
 npm install
-npm run seed     # cria o banco SQLite e popula com dados fictícios
-npm run dev       # inicia em http://localhost:3333
+npm run seed     # Cria o banco SQLite e popula com 13 RAs do DF e credenciais de teste
+npm run dev      # Inicia a API em http://localhost:3333/api
 ```
 
-Credenciais criadas pelo seed:
+### 2. Rodar a Suíte Completa de Testes Automatizados (E2E)
+```bash
+cd backend
+node test_full_suite.js
+```
+*Executa 6 testes integrados de aceitação (Login Admin, Dashboard API, Operação do Cabo, Cadastro e Portabilidade LGPD, Forecast ML e Segurança RBAC).*
 
-| Perfil | Usuário/Telefone | Senha |
-|---|---|---|
-| Admin | `admin` | `Admin@123` |
-| Cabo eleitoral | `cabo1` até `cabo10` | `Cabo@123` |
-| Eleitores | gerados aleatoriamente (ver banco) | `Eleitor@123` |
-
-### 2. Frontend
-
+### 3. Iniciar o Frontend SPA React
 ```bash
 cd frontend
 npm install
-npm run dev       # inicia em http://localhost:5173
+npm run dev      # Inicia o frontend em http://localhost:5173
 ```
+*Acesse `http://localhost:5173/#/login` para testar os 3 perfis.*
 
-O Vite já está configurado para fazer proxy de `/api` para `http://localhost:3333`.
+---
 
-Acesse `http://localhost:5173/login` e entre com as credenciais acima.
+## 🌐 URLs de Produção e Repositório
 
-## Gerando o APK Android (futuro)
-
-O frontend é uma SPA React comum, pensada desde o início para não depender de
-nenhuma API exclusiva de navegador — por isso pode virar um app Android sem
-reescrever o código:
-
-```bash
-cd frontend
-npm install @capacitor/core @capacitor/android
-npx cap init "Conecta Candidato" "com.conectacandidato.app"
-npm run build
-npx cap add android
-npx cap copy
-npx cap open android   # abre no Android Studio para gerar o APK/AAB
-```
-
-No Android Studio: `Build > Build Bundle(s) / APK(s) > Build APK(s)`.
-
-Isso exige o Android Studio/SDK instalados na sua máquina — não é possível
-compilar um APK dentro deste ambiente de chat, que não tem acesso à internet
-nem ao toolchain Android.
-
-## Integração real com WhatsApp
-
-Hoje o `WhatsAppService` (`backend/src/services/whatsappService.js`) roda em
-modo `stub`, apenas logando as mensagens no console — suficiente para
-desenvolvimento e testes. Para produção, implemente `sendViaProvider()` nesse
-mesmo arquivo com a chamada HTTP ao provedor escolhido (Meta Cloud API,
-Twilio, Z-API etc.) e configure as variáveis `WHATSAPP_*` no `.env`. Nenhuma
-outra parte do sistema precisa mudar.
-
-## Segurança e LGPD — o que já está implementado
-
-- Senhas com hash `bcrypt`
-- Autenticação via JWT
-- RBAC por perfil (`admin`, `field_agent`, `voter`) em todas as rotas
-- Cabo eleitoral nunca acessa dados administrativos nem de outros cabos
-- Eleitor nunca acessa dados de outro eleitor
-- Rate limiting (geral e reforçado em rotas de autenticação)
-- Validação de entrada com Zod em todos os endpoints de escrita
-- Proteção contra SQL Injection via ORM parametrizado (Sequelize)
-- Logs de auditoria (`audit_logs`), visíveis ao admin em `/admin/auditoria`
-- Registro de consentimento (`consent_records`) no cadastro do eleitor e no
-  cadastro de contatos pelo cabo — sem consentimento, o cadastro é bloqueado
-- Nenhuma tabela do banco armazena intenção de voto, opinião política,
-  religião, raça ou orientação sexual — essas colunas simplesmente não
-  existem no schema (privacy by design)
-- Módulo de ML restrito a dados agregados de produção/demanda — nunca recebe
-  `voter_id` como entrada e nunca gera score ou perfil individual
-
-### O que falta implementar para produção real
-
-Estes pontos foram deixados como próximos passos claros, não implementados
-neste projeto de demonstração:
-
-- Exclusão de conta e exportação de dados do próprio usuário (endpoints
-  `DELETE /voter/me` e `GET /voter/me/export` — a estrutura de dados já
-  suporta, faltam as rotas e a lógica de exclusão em cascata/anonimização)
-- Política de retenção automatizada (rotina agendada de expurgo)
-- Refresh token / revogação de sessão (hoje o JWT expira em 8h, sem refresh)
-- Migrations versionadas com `sequelize-cli` (hoje usa `sequelize.sync()`,
-  adequado para desenvolvimento, não recomendado para produção)
-- Testes automatizados (unitários e de integração)
-- Implementação real do `WhatsAppService.sendViaProvider()`
-
-## API — principais endpoints
-
-Ver `docs/ARCHITECTURE.md` para a lista completa. Resumo:
-
-```
-POST   /api/auth/register
-POST   /api/auth/verify-whatsapp
-POST   /api/auth/login
-POST   /api/auth/forgot-password
-POST   /api/auth/reset-password
-POST   /api/auth/change-password
-
-GET    /api/proposals
-GET    /api/proposals/:id
-
-POST   /api/suggestions
-GET    /api/my-suggestions
-
-POST   /api/requests
-GET    /api/my-requests
-
-POST   /api/agent/registrations
-GET    /api/agent/production
-
-GET    /api/admin/dashboard
-GET    /api/admin/production
-GET    /api/admin/production/by-agent
-GET    /api/admin/regions
-GET    /api/admin/agents
-POST   /api/admin/agents
-GET    /api/admin/audit-logs
-
-GET    /api/ml/forecast
-GET    /api/ml/anomalies
-GET    /api/ml/demand
-```
-
-## Identidade visual
-
-Paleta própria "Conecta Candidato" (azul-marinho + teal + âmbar), tipografia
-Sora/Manrope, navegação lateral no painel admin e navegação inferior no app
-do eleitor — definida em `frontend/src/styles/global.css`.
+- **Frontend (Render Static Site)**: [https://conecta-candidato-app.onrender.com](https://conecta-candidato-app.onrender.com)
+- **Backend API (Render Web Service)**: [https://conecta-candidato-api-qvrx.onrender.com/api](https://conecta-candidato-api-qvrx.onrender.com/api)
+- **Repositório GitHub**: [https://github.com/mauriciopardinho/conecta-candidato](https://github.com/mauriciopardinho/conecta-candidato)
