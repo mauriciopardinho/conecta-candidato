@@ -13,8 +13,8 @@ export default function VoterLayout() {
         position: 'sticky', top: 0, zIndex: 100
       }}>
         <div>
-          <strong style={{ fontFamily: 'var(--cc-font-display)', fontSize: '1.1rem', color: '#fff' }}>Conecta Candidato DF</strong>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Portal do Eleitor</div>
+          <strong style={{ fontFamily: 'var(--cc-font-display)', fontSize: '1.15rem', color: '#fff' }}>🛒 Mercado IA DF</strong>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Portal do Consumidor</div>
         </div>
         <button onClick={logout} className="cc-btn" style={{ background: 'rgba(255,255,255,0.1)', color: '#dfe9f2', fontSize: '0.82rem', padding: '6px 14px' }}>
           Sair
@@ -31,16 +31,16 @@ export default function VoterLayout() {
           <span>Início</span>
         </NavLink>
         <NavLink to="/app/propostas" className={({ isActive }) => (isActive ? 'active' : '')}>
-          <span>📑</span>
-          <span>Propostas</span>
+          <span>🏷️</span>
+          <span>Ofertas DF</span>
         </NavLink>
         <NavLink to="/app/sugestoes" className={({ isActive }) => (isActive ? 'active' : '')}>
           <span>💡</span>
-          <span>Sugestões</span>
+          <span>Dicas</span>
         </NavLink>
         <NavLink to="/app/solicitacoes" className={({ isActive }) => (isActive ? 'active' : '')}>
-          <span>🛠️</span>
-          <span>Demandas</span>
+          <span>🚨</span>
+          <span>Alertas</span>
         </NavLink>
         <NavLink to="/app/privacidade" className={({ isActive }) => (isActive ? 'active' : '')}>
           <span>🛡️</span>

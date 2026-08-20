@@ -8,25 +8,25 @@ export default function AdminLayout() {
   const [demoBanner, setDemoBanner] = useState(true);
 
   const menuItems = [
-    { to: '/admin', label: 'Centro de Comando', icon: '📊', end: true },
-    { to: '/admin/producao', label: 'Produção de Campo', icon: '📈' },
-    { to: '/admin/regioes', label: 'Mapa das RAs (DF)', icon: '🗺️' },
-    { to: '/admin/cabos', label: 'Lideranças & Cabos', icon: '📱' },
-    { to: '/admin/sugestoes', label: 'Sugestões', icon: '💡' },
-    { to: '/admin/solicitacoes', label: 'Demandas Comunitárias', icon: '🛠️' },
-    { to: '/admin/ml', label: 'Inteligência Operacional', icon: '🧠' },
+    { to: '/admin', label: 'Painel Executivo', icon: '📊', end: true },
+    { to: '/admin/producao', label: 'Pesquisa de Ofertas', icon: '📈' },
+    { to: '/admin/regioes', label: 'Mapa de Mercados DF', icon: '🗺️' },
+    { to: '/admin/cabos', label: 'Caçadores de Ofertas', icon: '📱' },
+    { to: '/admin/sugestoes', label: 'Dicas de Compras', icon: '💡' },
+    { to: '/admin/solicitacoes', label: 'Alertas de Divergência', icon: '🚨' },
+    { to: '/admin/ml', label: 'IA Preditiva de Preços', icon: '🧠' },
     { to: '/admin/auditoria', label: 'Auditoria LGPD', icon: '📜' },
-    { to: '/admin/onboarding', label: 'Configurar Campanha', icon: '⚙️' },
+    { to: '/admin/onboarding', label: 'Setup de Regiões', icon: '⚙️' },
     { to: '/pricing', label: 'Planos SaaS', icon: '💎' },
   ];
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cc-bg)' }}>
       
-      {/* BANNER MODO DEMONSTRAÇÃO COMERCIAL */}
+      {/* BANNER MODO DEMONSTRAÇÃO */}
       {demoBanner && (
         <div style={{
-          background: 'linear-gradient(90deg, #0d9488 0%, #2563eb 100%)',
+          background: 'linear-gradient(90deg, #10b981 0%, #2563eb 100%)',
           color: '#ffffff',
           padding: '8px 16px',
           fontSize: '0.82rem',
@@ -40,7 +40,7 @@ export default function AdminLayout() {
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>✨ <strong>Modo Demonstração Comercial SaaS:</strong> Dados simulados baseados nas Regiões Administrativas do DF.</span>
+            <span>🛒 <strong>Mercado IA DF:</strong> Inteligência de Preços de Supermercado em Brasília (13 RAs do DF).</span>
           </div>
           <button
             onClick={() => setDemoBanner(false)}
@@ -71,7 +71,7 @@ export default function AdminLayout() {
             {mobileMenuOpen ? '✕' : '☰'}
           </button>
           <span style={{ fontFamily: 'var(--cc-font-display)', fontWeight: 700, fontSize: '1.05rem', color: '#ffffff' }}>
-            Conecta Candidato DF
+            Mercado IA DF
           </span>
         </div>
 
@@ -132,9 +132,9 @@ export default function AdminLayout() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 12 }}>
               <div>
                 <div style={{ fontFamily: 'var(--cc-font-display)', fontWeight: 700, fontSize: '1.1rem', color: '#fff' }}>
-                  Conecta Candidato DF
+                  Mercado IA DF
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Centro de Comando</div>
+                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Painel do Gestor</div>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
@@ -194,8 +194,8 @@ export default function AdminLayout() {
 
       {/* SIDEBAR DESKTOP */}
       <aside className="cc-sidebar">
-        <div style={{ fontFamily: 'var(--cc-font-display)', fontSize: '1.1rem', marginBottom: 24, color: '#fff', fontWeight: 700 }}>
-          Conecta Candidato DF
+        <div style={{ fontFamily: 'var(--cc-font-display)', fontSize: '1.2rem', marginBottom: 24, color: '#fff', fontWeight: 800 }}>
+          🛒 Mercado IA DF
         </div>
         {menuItems.map((item) => (
           <NavLink
@@ -223,7 +223,7 @@ export default function AdminLayout() {
             gap: 8
           }}
         >
-          <span>🚪</span> Sair
+          <span>🚪</span> Sair da Conta
         </button>
       </aside>
 

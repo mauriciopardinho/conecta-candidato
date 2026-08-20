@@ -14,7 +14,7 @@ function StatCard({ label, value, subtext }) {
 }
 
 export default function AgentDashboard() {
-  const [activeTab, setActiveTab] = useState('cadastro'); // 'cadastro', 'demandas', 'historico'
+  const [activeTab, setActiveTab] = useState('cadastro');
   const [data, setData] = useState(null);
   const [agentRequests, setAgentRequests] = useState([]);
   const [regForm, setRegForm] = useState({ full_name: '', phone: '', has_consent: false, operational_note: '' });
@@ -43,16 +43,16 @@ export default function AgentDashboard() {
     e.preventDefault();
     setMessage('');
     if (!regForm.has_consent) {
-      setMessage('É obrigatório confirmar o consentimento LGPD do eleitor antes de salvar.');
+      setMessage('É obrigatório confirmar o consentimento LGPD antes de registrar.');
       return;
     }
     try {
       await api.post('/agent/registrations', regForm);
-      setMessage('Apoiador cadastrado com sucesso!');
+      setMessage('Oferta / Nota Fiscal registrada com sucesso!');
       setRegForm({ full_name: '', phone: '', has_consent: false, operational_note: '' });
       loadData();
     } catch (err) {
-      setMessage(err.response?.data?.error || 'Erro ao cadastrar contato.');
+      setMessage(err.response?.data?.error || 'Erro ao registrar oferta.');
     }
   }
 
@@ -61,11 +61,11 @@ export default function AgentDashboard() {
       await api.patch(`/requests/agent/${id}`, { status: newStatus });
       loadRequests();
     } catch (err) {
-      alert('Erro ao atualizar demanda.');
+      alert('Erro ao atualizar status do alerta.');
     }
   }
 
-  if (!data) return <p style={{ padding: 24, textAlign: 'center', color: 'var(--cc-text-muted)' }}>Carregando Minha Operação...</p>;
+  if (!data) return <p style={{ padding: 24, textAlign: 'center', color: 'var(--cc-text-muted)' }}>Carregando Painel Caçador de Ofertas...</p>;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cc-bg)' }}>
@@ -82,8 +82,8 @@ export default function AgentDashboard() {
         zIndex: 100
       }}>
         <div>
-          <strong style={{ fontFamily: 'var(--cc-font-display)', fontSize: '1.1rem', color: '#fff' }}>MINHA OPERAÇÃO</strong>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Liderança de Campo DF</div>
+          <strong style={{ fontFamily: 'var(--cc-font-display)', fontSize: '1.1rem', color: '#fff' }}>🔎 MINHA BUSCA — CAÇADOR DE OFERTAS</strong>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Operador de Inteligência de Preços DF</div>
         </div>
         <button onClick={logout} className="cc-btn" style={{ background: 'rgba(255,255,255,0.15)', color: '#dfe9f2', fontSize: '0.8rem', padding: '6px 14px' }}>
           Sair
@@ -94,7 +94,7 @@ export default function AgentDashboard() {
         
         {/* Metricas Pessoais */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
-          <StatCard label="Hoje" value={data.production.today} subtext="Contatos" />
+          <StatCard label="Preços Hoje" value={data.production.today} subtext="Mapeados" />
           <StatCard label="Semana" value={data.production.week} />
           <StatCard label="Mês" value={data.production.month} />
           <StatCard label="Total" value={data.production.total} />
@@ -117,7 +117,7 @@ export default function AgentDashboard() {
               boxShadow: activeTab === 'cadastro' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
             }}
           >
-            ➕ Novo Contato
+            ➕ Registrar Oferta
           </button>
           <button
             onClick={() => setActiveTab('demandas')}
@@ -134,7 +134,7 @@ export default function AgentDashboard() {
               boxShadow: activeTab === 'demandas' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
             }}
           >
-            🛠️ Demandas ({agentRequests.length})
+            🚨 Preços Errados ({agentRequests.length})
           </button>
           <button
             onClick={() => setActiveTab('historico')}
@@ -151,42 +151,42 @@ export default function AgentDashboard() {
               boxShadow: activeTab === 'historico' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
             }}
           >
-            📈 Produção
+            📈 Histórico
           </button>
         </div>
 
-        {/* Tab 1: Formulario de Cadastro */}
+        {/* Tab 1: Formulario de Registro de Oferta */}
         {activeTab === 'cadastro' && (
           <div className="cc-card" style={{ borderRadius: 16, padding: 20 }}>
-            <h3 style={{ marginTop: 0, fontSize: '1.1rem', marginBottom: 12 }}>📝 Registrar Novo Apoiador de Campo</h3>
+            <h3 style={{ marginTop: 0, fontSize: '1.1rem', marginBottom: 12 }}>📝 Cadastrar Oferta / Preço Encontrado no DF</h3>
             <form onSubmit={handleRegister}>
-              <label className="cc-label">Nome Completo do Apoiador</label>
+              <label className="cc-label">Nome do Produto & Marca</label>
               <input
                 className="cc-input"
                 required
                 value={regForm.full_name}
                 onChange={(e) => setRegForm({ ...regForm, full_name: e.target.value })}
                 style={{ marginBottom: 12 }}
-                placeholder="Ex: Ana Maria da Silva"
+                placeholder="Ex: Arroz Tipo 1 Camil 5kg"
               />
 
-              <label className="cc-label">Telefone WhatsApp (61)</label>
+              <label className="cc-label">Preço Encontrado (R$) / Mercado</label>
               <input
                 className="cc-input"
                 required
                 value={regForm.phone}
                 onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
                 style={{ marginBottom: 12 }}
-                placeholder="+55 (61) 99999-9999"
+                placeholder="Ex: R$ 18,90 - Atacadão Ceilândia"
               />
 
-              <label className="cc-label">Observação Operacional / Local de Abordagem</label>
+              <label className="cc-label">Observação / Validade da Oferta</label>
               <input
                 className="cc-input"
                 value={regForm.operational_note}
                 onChange={(e) => setRegForm({ ...regForm, operational_note: e.target.value })}
                 style={{ marginBottom: 12 }}
-                placeholder="Ex: Abordagem na feira comunitária de Ceilândia"
+                placeholder="Ex: Oferta de encarte válida até às 22h"
               />
 
               <label style={{ display: 'flex', gap: 10, fontSize: '0.85rem', marginBottom: 16, cursor: 'pointer', alignItems: 'center' }}>
@@ -195,7 +195,7 @@ export default function AgentDashboard() {
                   checked={regForm.has_consent}
                   onChange={(e) => setRegForm({ ...regForm, has_consent: e.target.checked })}
                 />
-                <span>Obtive o consentimento do eleitor conforme a LGPD.</span>
+                <span>Confirmo a precisão da informação de preço coletada na nota/gôndola.</span>
               </label>
 
               {message && (
@@ -212,21 +212,21 @@ export default function AgentDashboard() {
               )}
 
               <button className="cc-btn cc-btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.95rem' }}>
-                Confirmar Cadastro de Campo
+                Confirmar Registro de Preço
               </button>
             </form>
           </div>
         )}
 
-        {/* Tab 2: Demandas da Regiao */}
+        {/* Tab 2: Precos Errados / Divergentes da Regiao */}
         {activeTab === 'demandas' && (
           <div className="cc-card" style={{ borderRadius: 16, padding: 20 }}>
-            <h3 style={{ marginTop: 0, fontSize: '1.1rem', marginBottom: 14 }}>🛠️ Atendimento de Demandas da Sua Região</h3>
+            <h3 style={{ marginTop: 0, fontSize: '1.1rem', marginBottom: 14 }}>🚨 Validar Relatos de Preço Errado na Região</h3>
             
             {loadingRequests ? (
-              <p style={{ fontSize: '0.9rem', color: 'var(--cc-text-muted)' }}>Carregando demandas comunitárias...</p>
+              <p style={{ fontSize: '0.9rem', color: 'var(--cc-text-muted)' }}>Carregando relatos de divergência...</p>
             ) : agentRequests.length === 0 ? (
-              <p style={{ fontSize: '0.9rem', color: 'var(--cc-text-muted)' }}>Nenhuma demanda comunitária registrada nesta região no momento.</p>
+              <p style={{ fontSize: '0.9rem', color: 'var(--cc-text-muted)' }}>Nenhuma divergência de preço pendente nesta região.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {agentRequests.map((req) => (
@@ -253,7 +253,7 @@ export default function AgentDashboard() {
                           className="cc-btn"
                           style={{ fontSize: '0.78rem', background: '#f59e0b', color: '#fff', padding: '4px 10px' }}
                         >
-                          Assumir Atendimento
+                          Assumir Validação
                         </button>
                       )}
                       {req.status !== 'concluida' && (
@@ -262,7 +262,7 @@ export default function AgentDashboard() {
                           className="cc-btn"
                           style={{ fontSize: '0.78rem', background: '#10b981', color: '#fff', padding: '4px 10px' }}
                         >
-                          Marcar Resolvida
+                          Confirmar Correção / Pagar PIX
                         </button>
                       )}
                     </div>
@@ -276,13 +276,13 @@ export default function AgentDashboard() {
         {/* Tab 3: Historico de Producao */}
         {activeTab === 'historico' && (
           <div className="cc-card" style={{ borderRadius: 16, padding: 20 }}>
-            <h3 style={{ marginTop: 0, fontSize: '1.1rem', marginBottom: 14 }}>📈 Histórico de Registros de Campo</h3>
+            <h3 style={{ marginTop: 0, fontSize: '1.1rem', marginBottom: 14 }}>📈 Histórico de Preços Mapeados</h3>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={data.history}>
                 <XAxis dataKey="record_date" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="total" stroke="#10a394" strokeWidth={2.5} dot={false} />
+                <Line type="monotone" dataKey="total" stroke="#10b981" strokeWidth={2.5} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

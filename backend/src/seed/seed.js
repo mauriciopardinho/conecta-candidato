@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const {
   sequelize,
   User,
@@ -32,216 +32,207 @@ const DF_REGIONS = [
   { name: 'São Sebastião (RA XIV)', latitude: -15.9083, longitude: -47.7719, monthly_goal: 250 },
 ];
 
-const PROPOSAL_CATEGORIES = ['Saúde', 'Educação', 'Infraestrutura', 'Segurança', 'Emprego', 'Mobilidade Urbana (DF)'];
+const GROCERY_CATEGORIES = ['Mercearia', 'Carnes & Aves', 'Hortifrúti', 'Laticínios', 'Limpeza', 'Bebidas'];
 const FICTIONAL_FIRST_NAMES = ['Ana', 'Bruno', 'Carla', 'Diego', 'Elisa', 'Fábio', 'Gabriela', 'Hugo', 'Ivana', 'João', 'Lucas', 'Mariana', 'Pedro', 'Renata'];
 const FICTIONAL_LAST_NAMES = ['Silva', 'Souza', 'Oliveira', 'Pereira', 'Costa', 'Rodrigues', 'Almeida', 'Nascimento', 'Ferreira', 'Santos'];
 
 function randomFrom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
-function fakeName() {
-  return `${randomFrom(FICTIONAL_FIRST_NAMES)} ${randomFrom(FICTIONAL_LAST_NAMES)} (DF)`;
-}
-function fakePhone() {
-  return `+55 (61) 9${String(Math.floor(10000000 + Math.random() * 89999999))}`;
-}
-function dateNDaysAgo(n) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString();
+
+function randomPhone(idx) {
+  const n = String(idx).padStart(4, '0');
+  return `+55 (61) 9983${n}`;
 }
 
 async function runSeed() {
+  logger.info('Iniciando carga de dados de demonstração do Mercado IA DF...');
+
   await sequelize.sync({ force: true });
-  logger.info('Banco recriado. Iniciando seed de dados do Distrito Federal (Brasília)...');
 
-  const regions = await Region.bulkCreate(
-    DF_REGIONS.map((r) => ({
-      name: r.name,
-      city: 'Brasília',
-      state: 'DF',
-      latitude: r.latitude,
-      longitude: r.longitude,
-      monthly_goal: r.monthly_goal,
-    })),
-    { returning: true }
-  );
+  const createdRegions = [];
+  for (const r of DF_REGIONS) {
+    const region = await Region.create(r);
+    createdRegions.push(region);
+  }
+  logger.info(`Criadas ${createdRegions.length} Regiões Administrativas do DF.`);
 
+  // 1. Usuário Administrador (Gestor Mercado IA DF)
   const adminPasswordHash = await hashPassword('Admin@123');
   const adminUser = await User.create({
-    role: 'admin',
+    phone: '+55 (61) 99999-0001',
+    email: 'admin@mercadoiadf.com.br',
     username: 'admin',
-    email: 'admin@conectacandidato.df.br',
-    phone: '+55 (61) 99999-0000',
     password_hash: adminPasswordHash,
+    role: 'admin',
     status: 'active',
-    terms_accepted_at: new Date(),
   });
-  logger.info(`Admin fictício da Campanha DF criado — usuário: admin / senha: Admin@123`);
+  logger.info('Usuário Admin do Mercado IA DF criado: admin / Admin@123');
 
-  const agents = [];
-  const caboPasswordHash = await hashPassword('Cabo@123');
-  for (let i = 0; i < regions.length; i++) {
-    const region = regions[i];
+  // 2. Caçadores de Ofertas de Bairro (1 por RA)
+  const agentPasswordHash = await hashPassword('Cabo@123');
+  const createdAgents = [];
+  for (let i = 0; i < createdRegions.length; i++) {
+    const region = createdRegions[i];
+    const username = `cabo${i + 1}`;
     const user = await User.create({
+      phone: `+55 (61) 98888-00${String(i + 1).padStart(2, '0')}`,
+      email: `${username}@mercadoiadf.com.br`,
+      username,
+      password_hash: agentPasswordHash,
       role: 'field_agent',
-      username: `cabo${i + 1}`,
-      phone: fakePhone(),
-      password_hash: caboPasswordHash,
       status: 'active',
     });
+
     const agent = await FieldAgent.create({
       user_id: user.id,
-      full_name: `${fakeName()} - Liderança ${region.name.split(' ')[0]}`,
       region_id: region.id,
+      full_name: `Caçador de Ofertas ${i + 1} (${region.name.split(' ')[0]})`,
+      whatsapp: user.phone,
       is_active: true,
-      created_by_admin_id: adminUser.id,
     });
-    agents.push(agent);
+    createdAgents.push({ agent, user, region });
   }
+  logger.info(`Criados ${createdAgents.length} Caçadores de Ofertas de Bairro (cabo1..cabo13 / Cabo@123).`);
 
-  const proposals = [];
-  const sampleProposals = [
-    { title: 'Ampliação do VLP eBRT até Samambaia e Ceilândia', category: 'Mobilidade Urbana (DF)', desc: 'Construção e ampliação de corredores exclusivos de transporte público interconectando Ceilândia, Taguatinga e Samambaia.' },
-    { title: 'Reforço no Policiamento Ostensivo em Santa Maria e Recanto das Emas', category: 'Segurança', desc: 'Instalação de novas bases comunitárias de segurança e videomonitoramento de alta definição.' },
-    { title: 'Modernização de UPA 24h e HRC em Ceilândia e Taguatinga', category: 'Saúde', desc: 'Reforma com ampliação de leitos e informatização do atendimento médico imediato.' },
-    { title: 'Programa Jovem Aprendiz DF nas RAs de Baixa Renda', category: 'Emprego', desc: 'Parceria com o setor produtivo local para capacitação e primeiro emprego de jovens periféricos.' },
-    { title: 'Asfaltamento e Drenagem Pluvial em Vicente Pires e Sol Nascente', category: 'Infraestrutura', desc: 'Obras prioritárias para eliminar alagamentos históricos e pavimentar vias de acesso.' },
-    { title: 'Revitalização dos Parques Ecológicos do Plano Piloto e Águas Claras', category: 'Infraestrutura', desc: 'Iluminação LED, pistas de caminhada e espaço de lazer com acessibilidade.' },
+  // 3. Ofertas e Dicas de Economia da Comunidade
+  const sampleOffers = [
+    { title: 'Arroz Tipo 1 5kg — Menor Preço no Atacadão', cat: 'Mercearia', desc: 'Saco de 5kg por R$ 18,90 no Atacadão de Ceilândia. Validade registrada por nota emitida há 20 min.' },
+    { title: 'Peito de Frango R$ 11,90/kg no Assaí', cat: 'Carnes & Aves', desc: 'Oferta imbatível de Peito de Frango no Assaí de Taguatinga. Economia líquida estimada em R$ 34,00 para a feira familiar.' },
+    { title: 'Leite Integral R$ 3,89 no Carrefour', cat: 'Laticínios', desc: 'Caixa de leite por R$ 3,89 no Carrefour Asa Norte (Plano Piloto). Melhor valor apurado hoje.' },
+    { title: 'Óleo de Soja 900ml R$ 4,99 no Dona de Casa', cat: 'Mercearia', desc: 'Óleo de soja com desconto em Águas Claras. Economia calculada de R$ 2,50 por unidade.' },
   ];
 
-  for (let i = 0; i < sampleProposals.length; i++) {
-    const p = sampleProposals[i];
-    const region = Math.random() > 0.4 ? randomFrom(regions) : null;
-    const proposal = await Proposal.create({
-      title: p.title,
-      description: p.desc,
-      category: p.category,
-      region_id: region?.id || null,
-      status: 'published',
-      published_at: new Date(dateNDaysAgo(Math.floor(Math.random() * 45))),
+  for (const offer of sampleOffers) {
+    await Proposal.create({
+      title: offer.title,
+      category: offer.cat,
+      description: offer.desc,
+      expected_impact: 'Alta Economia no Orçamento Familiar',
+      estimated_cost: null,
+      status: 'publicada',
     });
-    proposals.push(proposal);
   }
 
-  const voters = [];
-  const eleitorPasswordHash = await hashPassword('Eleitor@123');
-  for (let i = 1; i <= 120; i++) {
-    const region = randomFrom(regions);
+  // 4. Consumidores Cadastrados e Registros de Compras no DF
+  const voterPasswordHash = await hashPassword('Eleitor@123');
+  let totalRegistrationsCount = 0;
+
+  const createdVoters = [];
+  for (let i = 1; i <= 100; i++) {
+    const region = randomFrom(createdRegions);
+    const agentObj = createdAgents.find((a) => a.region.id === region.id) || createdAgents[0];
+    const firstName = randomFrom(FICTIONAL_FIRST_NAMES);
+    const lastName = randomFrom(FICTIONAL_LAST_NAMES);
+    const fullName = `${firstName} ${lastName}`;
+    const phone = randomPhone(i);
+
     const user = await User.create({
+      phone,
+      email: null,
+      username: null,
+      password_hash: voterPasswordHash,
       role: 'voter',
-      phone: fakePhone(),
-      password_hash: eleitorPasswordHash,
       status: 'active',
-      terms_accepted_at: new Date(dateNDaysAgo(Math.floor(Math.random() * 60))),
     });
+
     const voter = await Voter.create({
       user_id: user.id,
-      full_name: fakeName(),
       region_id: region.id,
+      full_name: fullName,
+      phone,
+      whatsapp_verified: true,
+      notes: 'Consumidor cadastrado no programa de economia do bairro',
     });
+    createdVoters.push(voter);
+
     await ConsentRecord.create({
       subject_type: 'voter',
       subject_id: voter.id,
-      consent_type: 'termos_e_privacidade',
-      granted_at: new Date(dateNDaysAgo(Math.floor(Math.random() * 60))),
-      evidence: 'Aceite digital com assinatura LGPD registrada no app',
+      consent_type: 'lgpd_terms_v1',
+      granted_at: new Date(),
+      ip_address: '127.0.0.1',
+      user_agent: 'SeedScript/1.0',
+      metadata: JSON.stringify({ accepted: true, purpose: 'pesquisa_precos_mercado_df' }),
     });
-    voters.push(voter);
-  }
 
-  for (let i = 1; i <= 100; i++) {
-    const agent = randomFrom(agents);
-    const region = regions.find((r) => r.id === agent.region_id) || randomFrom(regions);
-    const consent = await ConsentRecord.create({
-      subject_type: 'registration',
-      subject_id: agent.id,
-      consent_type: 'contato_cabo',
-      granted_at: new Date(dateNDaysAgo(Math.floor(Math.random() * 60))),
-      collected_by: agent.id,
-      evidence: 'Consentimento presencial gravado em campo com confirmação SMS',
-    });
+    const d = new Date();
+    d.setDate(d.getDate() - Math.floor(Math.random() * 30));
+    const regDateStr = d.toISOString().slice(0, 10);
+
     await Registration.create({
-      full_name: fakeName(),
-      phone: fakePhone(),
+      voter_id: voter.id,
+      registered_by_agent_id: agentObj.agent.id,
       region_id: region.id,
-      registered_by_agent_id: agent.id,
-      registration_date: dateNDaysAgo(Math.floor(Math.random() * 90)).slice(0, 10),
-      operational_note: `Abordagem de campo realizada na feira / comércio local de ${region.name}.`,
-      consent_id: consent.id,
-      source: 'Abordagem Presencial de Campo',
+      full_name: fullName,
+      phone,
+      registration_date: regDateStr,
+    });
+    totalRegistrationsCount++;
+  }
+
+  // 5. Alertas de Preço Incorreto (Demandas de Correção com PIX/Cashback)
+  const sampleAlerts = [
+    { sub: 'Preço do Feijão Carioca diferente na prateleira', desc: 'No sistema marca R$ 6,90 mas na gôndola está R$ 8,50. Enviado foto do encarte.', prio: 'alta', cat: 'Mercearia' },
+    { sub: 'Promoção de Óleo de Soja encerrada antes do prazo', desc: 'Atacadão informou término de estoque de óleo em Ceilândia.', prio: 'media', cat: 'Mercearia' },
+    { sub: 'Preço da Carne Moída divergente em Taguatinga', desc: 'Na nota registrou R$ 24,90/kg mas na etiqueta constava R$ 21,90.', prio: 'alta', cat: 'Carnes & Aves' },
+  ];
+
+  for (let i = 0; i < sampleAlerts.length; i++) {
+    const alert = sampleAlerts[i];
+    const region = createdRegions[i % createdRegions.length];
+    const voter = createdVoters[i % createdVoters.length];
+    await RequestModel.create({
+      voter_id: voter.id,
+      region_id: region.id,
+      subject: alert.sub,
+      description: alert.desc,
+      priority: alert.prio,
+      category: alert.cat,
+      status: i === 0 ? 'recebida' : i === 1 ? 'em_analise' : 'concluida',
     });
   }
 
-  for (const agent of agents) {
-    for (let d = 89; d >= 0; d--) {
-      const base = 2 + Math.random() * 5;
-      const isCeilandiaOrSamambaia = agent.region_id === regions[0].id || agent.region_id === regions[1].id;
-      const boost = isCeilandiaOrSamambaia ? 3 : 0;
-      const count = Math.max(1, Math.round(base + boost + (Math.random() > 0.85 ? -2 : 1)));
+  // 6. Registros de Produção Diária de Preços por Agente (Últimos 30 dias)
+  const today = new Date();
+  for (const { agent, region } of createdAgents) {
+    for (let dayOffset = 29; dayOffset >= 0; dayOffset--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - dayOffset);
+      const dateStr = d.toISOString().slice(0, 10);
+      const count = Math.floor(Math.random() * 4) + 1;
+
       await ProductionRecord.create({
         agent_id: agent.id,
-        region_id: agent.region_id,
-        record_date: dateNDaysAgo(d).slice(0, 10),
+        region_id: region.id,
+        record_date: dateStr,
         registrations_count: count,
       });
     }
   }
 
-  const requestSubjects = [
-    'Manutenção de iluminação pública na quadra principal',
-    'Solicitação de reforma da praça comunitária e parquinho',
-    'Melhoria nas linhas de ônibus em horários de pico',
-    'Pedido de ronda escolar e sinalização perto da escola',
-    'Tapa-buracos na avenida comercial',
-  ];
+  // 7. Audit Log de Inicialização
+  await AuditLog.create({
+    actor_role: 'system',
+    action: 'SEED_INITIALIZATION',
+    entity: 'Database',
+    ip_address: '127.0.0.1',
+    metadata: JSON.stringify({ message: 'Base do Mercado IA DF semeada com sucesso com dados do DF.' }),
+  });
 
-  for (let i = 1; i <= 35; i++) {
-    const voter = randomFrom(voters);
-    await RequestModel.create({
-      voter_id: voter.id,
-      region_id: voter.region_id,
-      subject: randomFrom(requestSubjects),
-      description: 'Solicitação registrada por eleitor morador do DF referente a benfeitorias na sua Região Administrativa.',
-      priority: randomFrom(['baixa', 'media', 'alta', 'urgente']),
-      status: randomFrom(['recebida', 'em_analise', 'encaminhada', 'respondida', 'concluida']),
-    });
-  }
-
-  const auditLogsSample = [
-    { action: 'ACEITE_TERMOS_LGPD', entity: 'ConsentRecord', actor_role: 'voter', ip_address: '177.135.22.10', metadata: JSON.stringify({ detalhe: 'Consentimento de tratamento de dados LGPD aceito pelo eleitor' }) },
-    { action: 'CADASTRAR_ELEITOR_CAMPO', entity: 'Registration', actor_role: 'field_agent', ip_address: '177.182.45.89', metadata: JSON.stringify({ regiao: 'Ceilândia (RA IX)', origem: 'Abordagem Presencial' }) },
-    { action: 'CADASTRAR_ELEITOR_CAMPO', entity: 'Registration', actor_role: 'field_agent', ip_address: '177.182.45.90', metadata: JSON.stringify({ regiao: 'Taguatinga (RA III)', origem: 'Abordagem Presencial' }) },
-    { action: 'LOGIN_ADMIN', entity: 'User', actor_role: 'admin', ip_address: '200.142.10.5', metadata: JSON.stringify({ usuario: 'admin', navegador: 'Chrome / Windows DF' }) },
-    { action: 'CONSULTA_PAINEL_PREDITIVO', entity: 'MLModel', actor_role: 'admin', ip_address: '200.142.10.5', metadata: JSON.stringify({ modulo: 'Machine Learning Preditivo DF' }) },
-    { action: 'CRIAR_CABO_ELEITORAL', entity: 'FieldAgent', actor_role: 'admin', ip_address: '200.142.10.5', metadata: JSON.stringify({ regiao: 'Samambaia (RA XII)' }) },
-    { action: 'ACEITE_TERMOS_LGPD', entity: 'ConsentRecord', actor_role: 'voter', ip_address: '189.6.11.44', metadata: JSON.stringify({ detalhe: 'Consentimento digital confirmado via SMS' }) },
-    { action: 'ATUALIZAR_STATUS_SOLICITACAO', entity: 'RequestModel', actor_role: 'admin', ip_address: '200.142.10.5', metadata: JSON.stringify({ novo_status: 'em_analise', regiao: 'Gama (RA II)' }) },
-    { action: 'EXPORTAR_RELATORIO_CAMPO', entity: 'ProductionRecord', actor_role: 'admin', ip_address: '200.142.10.5', metadata: JSON.stringify({ formato: 'PDF', periodo: 'Ultimos 30 dias' }) },
-    { action: 'LOGIN_CABO', entity: 'User', actor_role: 'field_agent', ip_address: '177.135.88.12', metadata: JSON.stringify({ usuario: 'cabo1' }) },
-  ];
-
-  for (let i = 0; i < 40; i++) {
-    const sample = randomFrom(auditLogsSample);
-    const nDays = Math.floor(Math.random() * 30);
-    await AuditLog.create({
-      actor_role: sample.actor_role,
-      action: sample.action,
-      entity: sample.entity,
-      ip_address: sample.ip_address,
-      metadata: sample.metadata,
-      created_at: dateNDaysAgo(nDays),
-    });
-  }
-
-  logger.info('✅ Seed concluído com sucesso! Banco populado com RAs do Distrito Federal e Logs de Auditoria.');
+  logger.info(`Concluído! ${totalRegistrationsCount} registros de preços criados.`);
 }
 
 if (require.main === module) {
-  runSeed().then(() => process.exit(0)).catch((err) => {
-    logger.error('Erro ao rodar o seed:', err);
-    process.exit(1);
-  });
+  runSeed()
+    .then(() => {
+      logger.info('Seed concluído com sucesso.');
+      process.exit(0);
+    })
+    .catch((err) => {
+      logger.error('Erro no seed:', err);
+      process.exit(1);
+    });
 }
 
-module.exports = runSeed;
+module.exports = { runSeed };
